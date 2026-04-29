@@ -77,6 +77,12 @@ async function handleAktivasi(chatId: number, productId: string) {
     return;
   }
 
+  // Skip database operations if DATABASE_URL not set (for landing page only)
+  if (!sql) {
+    await sendMessage(chatId, '❌ Database tidak dikonfigurasi');
+    return;
+  }
+
   // Check if device exists
   const device = await sql`
     SELECT id, nama_lokasi FROM devices WHERE product_id = ${productId}
@@ -129,6 +135,11 @@ async function handleAktivasi(chatId: number, productId: string) {
 }
 
 async function handleStatus(chatId: number) {
+  if (!sql) {
+    await sendMessage(chatId, '❌ Database tidak dikonfigurasi');
+    return;
+  }
+
   const user = await sql`
     SELECT id FROM users WHERE telegram_chat_id = ${chatId}
   `;
@@ -163,6 +174,11 @@ async function handleStatus(chatId: number) {
 }
 
 async function handleRiwayat(chatId: number) {
+  if (!sql) {
+    await sendMessage(chatId, '❌ Database tidak dikonfigurasi');
+    return;
+  }
+
   const user = await sql`
     SELECT id FROM users WHERE telegram_chat_id = ${chatId}
   `;
@@ -199,6 +215,11 @@ async function handleRiwayat(chatId: number) {
 }
 
 async function handleMatikan(chatId: number) {
+  if (!sql) {
+    await sendMessage(chatId, '❌ Database tidak dikonfigurasi');
+    return;
+  }
+
   const user = await sql`
     SELECT id FROM users WHERE telegram_chat_id = ${chatId}
   `;
