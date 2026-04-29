@@ -1,7 +1,4 @@
 import { NextResponse } from 'next/server';
-import { neon } from '@neondatabase/serverless';
-
-const sql = neon(process.env.DATABASE_URL!);
 
 export async function POST(request: Request) {
   try {
@@ -21,6 +18,17 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+
+    // Skip database operations if DATABASE_URL not set (for landing page only)
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json(
+        { error: 'Database tidak dikonfigurasi' },
+        { status: 503 }
+      );
+    }
+
+    const { neon } = await import('@neondatabase/serverless');
+    const sql = neon(process.env.DATABASE_URL);
 
     // Check if user already exists
     const existingUser = await sql`
