@@ -1,15 +1,12 @@
 import { NextAuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { neon } from '@neondatabase/serverless';
-
-const sql = neon(process.env.DATABASE_URL!);
 
 export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      clientId: process.env.GOOGLE_CLIENT_ID || '',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
     }),
     CredentialsProvider({
       name: 'credentials',
@@ -22,7 +19,15 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
+        // Skip database auth if DATABASE_URL not set (for landing page only)
+        if (!process.env.DATABASE_URL) {
+          return null;
+        }
+
         try {
+          const { neon } = await import('@neondatabase/serverless');
+          const sql = neon(process.env.DATABASE_URL);
+
           const users = await sql`
             SELECT id, name, email, password
             FROM users
@@ -60,16 +65,28 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async signIn({ user, account, profile }) {
       if (account?.provider === 'google') {
-        // Create user if doesn't exist
-        const existingUsers = await sql`
-          SELECT id FROM users WHERE email = ${user.email}
-        `;
+        // Skip database operations if DATABASE_URL not set
+        if (!process.env.DATABASE_URL) {
+          return true;
+        }
 
-        if (existingUsers.length === 0) {
-          await sql`
-            INSERT INTO users (name, email, password)
-            VALUES (${user.name}, ${user.email}, 'google-auth')
+        try {
+          const { neon } = await import('@neondatabase/serverless');
+          const sql = neon(process.env.DATABASE_URL);
+
+          // Create user if doesn't exist
+          const existingUsers = await sql`
+            SELECT id FROM users WHERE email = ${user.email}
           `;
+
+          if (existingUsers.length === 0) {
+            await sql`
+              INSERT INTO users (name, email, password)
+              VALUES (${user.name}, ${user.email}, 'google-auth')
+            `;
+          }
+        } catch (error) {
+          console.error('Database error:', error);
         }
       }
       return true;
@@ -90,5 +107,5 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: 'jwt',
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.NEXTAUTH_SECRET || 'fallback-secret-for-development',
 };
