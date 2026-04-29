@@ -13,6 +13,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Skip database operations if DATABASE_URL not set (for landing page only)
+    if (!sql) {
+      return NextResponse.json(
+        { error: 'Database tidak dikonfigurasi' },
+        { status: 503 }
+      );
+    }
+
     // Get device ID from product_id
     const device = await sql`
       SELECT id, current_status FROM devices WHERE product_id = ${product_id}
