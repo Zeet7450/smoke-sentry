@@ -15,7 +15,8 @@ export default function DashboardLayout({
   const router = useRouter();
 
   useEffect(() => {
-    if (status === 'unauthenticated') {
+    // Only redirect to login if DATABASE_URL is configured (full app mode)
+    if (status === 'unauthenticated' && process.env.DATABASE_URL) {
       router.push('/login');
     }
   }, [status, router]);
@@ -24,7 +25,9 @@ export default function DashboardLayout({
     return <div className="min-h-screen bg-background flex items-center justify-center">Loading...</div>;
   }
 
-  if (!session) {
+  // Allow rendering without session for landing page deployment
+  // Auth will be enforced when DATABASE_URL is configured
+  if (!session && process.env.DATABASE_URL) {
     return null;
   }
 
