@@ -18,6 +18,11 @@ const syne = Syne({
 export const metadata: Metadata = {
   title: "SmokeSentry - IoT Smart Smoke & Fire Detector",
   description: "Detektor asap & api pintar yang langsung ngabarin kamu. Because Five Minutes Can Save Everything.",
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 5,
+  },
 };
 
 export default function RootLayout({
