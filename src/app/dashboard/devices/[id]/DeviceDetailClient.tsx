@@ -20,8 +20,8 @@ export function DeviceDetailClient({ device, initialReadings }: { device: any; i
     }));
   });
 
-  const isOnline = device.last_seen 
-    ? (Date.now() - new Date(device.last_seen).getTime()) < 60_000 
+  const isOnline = device.last_seen
+    ? (Date.now() - new Date(device.last_seen).getTime()) < 60_000
     : false;
 
   const tableData = [...chartData].reverse().slice(0, 10);
@@ -81,7 +81,7 @@ export function DeviceDetailClient({ device, initialReadings }: { device: any; i
       {/* Chart */}
       <div className="mb-6">
         <h2 className="text-xl font-bold mb-4">Grafik Sensor</h2>
-        <SensorChart deviceId={device.id} initialData={chartData} />
+        <SensorChart deviceId={device.id} initialData={initialReadings} />
       </div>
 
       {/* Sensor Readings Table */}

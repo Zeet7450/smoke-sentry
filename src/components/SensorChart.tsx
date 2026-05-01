@@ -4,9 +4,37 @@ import { LineChart, Line, XAxis, YAxis, Tooltip,
 import { useEffect, useState, useCallback } from 'react'
 
 export function SensorChart({ deviceId, initialData }: { deviceId: string; initialData?: any[] }) {
+  const mapToChartFormat = (data: any[]) =>
+    data.map((d) => {
+      // Handle semua kemungkinan format: Date object, string ISO, timestamp number
+      let dateObj: Date
+      if (d.created_at instanceof Date) {
+        dateObj = d.created_at
+      } else if (typeof d.created_at === 'string' || typeof d.created_at === 'number') {
+        dateObj = new Date(d.created_at)
+      } else {
+        dateObj = new Date()
+      }
+
+      const isValid = !isNaN(dateObj.getTime())
+
+      return {
+        time: isValid
+          ? dateObj.toLocaleTimeString('id-ID', {
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+            })
+          : '--:--:--',
+        mq2:   Number(d.mq2)   || 0,
+        mq135: Number(d.mq135) || 0,
+        flame: Number(d.flame) || 0,
+      }
+    })
+
   const [chartData, setChartData] = useState(() => {
-    if (!initialData || initialData.length === 0) return [];
-    return initialData;
+    if (!initialData || initialData.length === 0) return []
+    return mapToChartFormat(initialData)
   });
   const [loading, setLoading] = useState(false);
 
@@ -17,14 +45,7 @@ export function SensorChart({ deviceId, initialData }: { deviceId: string; initi
       const json = await res.json();
 
       if (json && json.length > 0) {
-        const mapped = json.map((d: any) => ({
-          time: new Date(d.created_at).toLocaleTimeString('id-ID', {
-            hour: '2-digit', minute: '2-digit', second: '2-digit'
-          }),
-          mq2:   d.mq2 ?? 0,
-          mq135: d.mq135 ?? 0,
-          flame: d.flame ?? 0,
-        }));
+        const mapped = mapToChartFormat(json);
         setChartData(mapped);
       }
     } catch (err) {
@@ -42,6 +63,8 @@ export function SensorChart({ deviceId, initialData }: { deviceId: string; initi
   }, [deviceId, fetchReadings]);
 
   const chartHeight = typeof window !== 'undefined' && window.innerWidth < 768 ? 250 : 350
+
+  console.log('chartData:', chartData)
 
   if (loading && chartData.length === 0) {
     return (

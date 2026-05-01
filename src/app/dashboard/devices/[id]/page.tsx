@@ -51,7 +51,13 @@ export default async function DeviceDetailPage({ params }: { params: Promise<{ i
     .orderBy(desc(sensorLogs.created_at))
     .limit(100)
 
-  const chronologicalReadings = readings.reverse()
+  // Convert Date objects to ISO strings for serialization
+  const chronologicalReadings = readings.reverse().map(r => ({
+    ...r,
+    created_at: r.created_at instanceof Date
+      ? r.created_at.toISOString()
+      : String(r.created_at)
+  }))
 
   return <DeviceDetailClient device={device[0]} initialReadings={chronologicalReadings} />
 }

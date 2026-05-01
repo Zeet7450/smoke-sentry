@@ -107,6 +107,8 @@ export default function DashboardPage() {
       const data = await res.json();
       if (data.success) {
         setSensorData(data.data);
+      } else {
+        setSensorData(data); // Try using data directly if not wrapped
       }
     } catch (error) {
       console.error('Error fetching sensor data:', error);
