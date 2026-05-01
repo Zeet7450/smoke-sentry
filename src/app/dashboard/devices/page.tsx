@@ -885,18 +885,77 @@ export default function DevicesPage() {
                     </a>
                   </div>
 
+                  {/* ── Penting: Start Bot Dulu ── */}
+                  <div style={{
+                    background: 'rgba(232, 255, 71, 0.05)',
+                    border: '1px solid #E8FF47',
+                    borderRadius: '0.75rem',
+                    padding: '1rem',
+                    marginTop: '12px',
+                    marginBottom: '1rem'
+                  }}>
+                    <p style={{
+                      fontSize: '11px',
+                      color: '#E8FF47',
+                      fontWeight: 600,
+                      letterSpacing: '0.8px',
+                      textTransform: 'uppercase',
+                      marginBottom: '8px'
+                    }}>
+                      ⚠️ Penting: Start Bot Dulu
+                    </p>
+
+                    <ol style={{ paddingLeft: '1.1rem', color: '#888899', fontSize: '13px', lineHeight: 1.8 }}>
+                      <li>Buka Telegram → cari <b style={{ color: '#E8FF47' }}>@SmokeSentryBot</b></li>
+                      <li>Kirim pesan <code style={{ background: '#1a1a2e', padding: '1px 6px', borderRadius: '4px', color: '#ffffff' }}>/start</code></li>
+                      <li>Bot akan balas "Welcome to SmokeSentry!"</li>
+                      <li>Sekarang bot bisa mengirim notifikasi ke kamu</li>
+                    </ol>
+
+                    <a
+                      href="https://t.me/SmokeSentryBot"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'block',
+                        textAlign: 'center',
+                        background: '#E8FF47',
+                        color: '#080810',
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                        padding: '8px',
+                        textDecoration: 'none',
+                        marginTop: '12px',
+                        fontWeight: 600
+                      }}
+                    >
+                      🚀 Buka @SmokeSentryBot
+                    </a>
+                  </div>
+
                   <Button
                     type="button"
                     variant="outline"
                     size="md"
                     onClick={async () => {
-                      const res = await fetch('/api/test-notification', { method: 'POST' });
+                      const res = await fetch('/api/test-notification', { 
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ deviceId: selectedDevice.id })
+                      });
                       const data = await res.json();
                       if (data.success) {
                         showToast({
                           type: 'info',
                           title: 'Test Dikirim',
-                          message: 'Pesan test dikirim ke Telegram.',
+                          message: 'Pesan test dikirim ke Telegram. Cek bot @SmokeSentryBot.',
+                          autoDismiss: true,
+                        });
+                      } else {
+                        showToast({
+                          type: 'danger',
+                          title: 'Gagal',
+                          message: data.error || 'Gagal mengirim test notification.',
                           autoDismiss: true,
                         });
                       }
