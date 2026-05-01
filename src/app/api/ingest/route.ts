@@ -47,13 +47,21 @@ export async function POST(req: NextRequest) {
 
     if (!rows[0]) {
       return NextResponse.json(
-        { error: 'Device not found' },
+        { error: 'Device not found', deleted: true },
         { status: 404 }
       )
     }
 
     const device = rows[0]
     const now    = new Date()
+
+    // Validate API key if device has one
+    if (device.apikey && api_key && device.apikey !== api_key) {
+      return NextResponse.json(
+        { error: 'Invalid API key', deleted: true },
+        { status: 401 }
+      )
+    }
 
     // Update status device → online + nilai sensor terakhir
     await db

@@ -88,7 +88,7 @@ export async function DELETE(
       )
 
     console.log('[DELETE] Device deleted successfully')
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ ok: true })
   } catch (error) {
     console.error('[DELETE] Error deleting device:', error)
     return NextResponse.json({ 
