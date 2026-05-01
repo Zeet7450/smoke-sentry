@@ -83,6 +83,9 @@ export const devices = pgTable('devices', {
   alert_last:   boolean('alert_last').default(false),
   created_at:   bigint('created_at', { mode: 'number' }).notNull(),
   updated_at:   bigint('updated_at', { mode: 'number' }).notNull(),
+  sleep_mode_enabled: boolean('sleep_mode_enabled').default(false),
+  sleep_start: text('sleep_start').default('22:00'),
+  sleep_end: text('sleep_end').default('06:00'),
 })
 
 // ─── TABLE: sensor_readings ─────────────────────────────────────────

@@ -22,7 +22,10 @@ export default function DevicesPage() {
     mq2_threshold: 400, 
     mq135_threshold: 300, 
     flame_threshold: 500,
-    telegramchatid: ''
+    telegramchatid: '',
+    sleep_mode_enabled: false,
+    sleep_start: '22:00',
+    sleep_end: '06:00'
   });
   const [settingsTab, setSettingsTab] = useState('info');
   const [loading, setLoading] = useState(false);
@@ -262,6 +265,9 @@ export default function DevicesPage() {
       mq135_threshold: device.mq135_threshold || 300,
       flame_threshold: device.flame_threshold || 500,
       telegramchatid: device.telegramchatid || '',
+      sleep_mode_enabled: device.sleep_mode_enabled || false,
+      sleep_start: device.sleep_start || '22:00',
+      sleep_end: device.sleep_end || '06:00',
     });
     setSettingsTab('info');
     setIsSettingsModalOpen(true);
@@ -578,12 +584,22 @@ export default function DevicesPage() {
               <button
                 onClick={() => setSettingsTab('notifications')}
                 className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                  settingsTab === 'notifications' 
-                    ? 'border-[#E8FF47] text-[#E8FF47]' 
+                  settingsTab === 'notifications'
+                    ? 'border-[#E8FF47] text-[#E8FF47]'
                     : 'border-transparent text-text-muted hover:text-white'
                 }`}
               >
                 Notifikasi
+              </button>
+              <button
+                onClick={() => setSettingsTab('sleep')}
+                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                  settingsTab === 'sleep'
+                    ? 'border-[#E8FF47] text-[#E8FF47]'
+                    : 'border-transparent text-text-muted hover:text-white'
+                }`}
+              >
+                🌙 Mode Tidur
               </button>
             </div>
 
@@ -907,6 +923,57 @@ export default function DevicesPage() {
                   >
                     Test Kirim Notifikasi
                   </Button>
+                </div>
+              )}
+
+              {/* Tab 4: Mode Tidur */}
+              {settingsTab === 'sleep' && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      id="sleep_mode_enabled"
+                      checked={settingsFormData.sleep_mode_enabled}
+                      onChange={(e) => setSettingsFormData({ ...settingsFormData, sleep_mode_enabled: e.target.checked })}
+                      className="w-5 h-5 accent-[#E8FF47]"
+                    />
+                    <label htmlFor="sleep_mode_enabled" className="text-sm font-medium">
+                      Aktifkan Mode Tidur
+                    </label>
+                  </div>
+                  
+                  <p className="text-xs text-text-muted">
+                    ℹ️ Notifikasi tidak akan dikirim selama jam yang ditentukan. Data sensor tetap direkam.
+                  </p>
+
+                  <div className={`grid grid-cols-2 gap-4 ${!settingsFormData.sleep_mode_enabled ? 'opacity-50 pointer-events-none' : ''}`}>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Jam Mulai</label>
+                      <input
+                        type="time"
+                        value={settingsFormData.sleep_start}
+                        onChange={(e) => setSettingsFormData({ ...settingsFormData, sleep_start: e.target.value })}
+                        className="w-full px-4 py-2 bg-black border border-[#E8FF47] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E8FF47]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Jam Selesai</label>
+                      <input
+                        type="time"
+                        value={settingsFormData.sleep_end}
+                        onChange={(e) => setSettingsFormData({ ...settingsFormData, sleep_end: e.target.value })}
+                        className="w-full px-4 py-2 bg-black border border-[#E8FF47] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E8FF47]"
+                      />
+                    </div>
+                  </div>
+
+                  {settingsFormData.sleep_mode_enabled && (
+                    <div className="p-3 rounded-lg" style={{ background: '#0a0a14', border: '1px solid #1e1e2e' }}>
+                      <p className="text-sm" style={{ color: '#C8E000' }}>
+                        🌙 Mode tidur aktif: {settingsFormData.sleep_start} - {settingsFormData.sleep_end}
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
 

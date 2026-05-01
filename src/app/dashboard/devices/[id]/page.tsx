@@ -37,7 +37,15 @@ export default async function DeviceDetailPage({ params }: { params: Promise<{ i
     )
   }
 
-  const readings = await db.select()
+  const readings = await db.select({
+    device_id: sensorLogs.device_id,
+    mq2: sensorLogs.mq2,
+    mq135: sensorLogs.mq135,
+    flame: sensorLogs.flame,
+    flame_detected: sensorLogs.flame_detected,
+    is_alert: sensorLogs.is_alert,
+    created_at: sensorLogs.created_at,
+  })
     .from(sensorLogs)
     .where(eq(sensorLogs.device_id, id))
     .orderBy(desc(sensorLogs.created_at))

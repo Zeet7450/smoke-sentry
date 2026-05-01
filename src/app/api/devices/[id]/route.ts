@@ -29,7 +29,7 @@ export async function PATCH(
     }
 
     const body = await req.json()
-    const { name, location, mq2_threshold, mq135_threshold, flame_threshold, telegramchatid } = body
+    const { name, location, mq2_threshold, mq135_threshold, flame_threshold, telegramchatid, sleep_mode_enabled, sleep_start, sleep_end } = body
 
     const updated = await db.update(devices)
       .set({
@@ -39,6 +39,9 @@ export async function PATCH(
         ...(mq135_threshold !== undefined && { mq135_threshold }),
         ...(flame_threshold !== undefined && { flame_threshold }),
         ...(telegramchatid !== undefined && { telegramchatid }),
+        ...(sleep_mode_enabled !== undefined && { sleep_mode_enabled }),
+        ...(sleep_start !== undefined && { sleep_start }),
+        ...(sleep_end !== undefined && { sleep_end }),
         updated_at: Date.now(),
       })
       .where(eq(devices.id, id))

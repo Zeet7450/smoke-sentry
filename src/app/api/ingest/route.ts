@@ -79,6 +79,31 @@ export async function POST(req: NextRequest) {
       })
       .where(eq(devices.id, device.id))
 
+    // Cek mode tidur sebelum kirim notifikasi
+    let kirimAlert = Boolean(is_alert)
+    
+    if (device.sleep_mode_enabled && device.sleep_start && device.sleep_end) {
+      const now = new Date()
+      const jam = now.getHours()
+      const menit = now.getMinutes()
+      const waktuSekarang = jam * 60 + menit
+
+      const [startH, startM] = device.sleep_start.split(':').map(Number)
+      const [endH, endM] = device.sleep_end.split(':').map(Number)
+      const startMenit = startH * 60 + startM
+      const endMenit = endH * 60 + endM
+
+      // Handle overnight (misal 22:00 - 06:00)
+      const dalamModeTidur = startMenit > endMenit
+        ? (waktuSekarang >= startMenit || waktuSekarang < endMenit)
+        : (waktuSekarang >= startMenit && waktuSekarang < endMenit)
+
+      if (dalamModeTidur) {
+        kirimAlert = false
+        console.log('[ingest] Sleep mode active, notification suppressed')
+      }
+    }
+
     // Simpan ke sensor_logs untuk grafik
     // (skip jika tabel belum ada — tidak crash)
     try {
@@ -100,6 +125,7 @@ export async function POST(req: NextRequest) {
       ok:     true,
       status: 'online',
       device: device.name,
+      sleep_mode_active: !kirimAlert && Boolean(is_alert),
     })
 
   } catch (err) {
