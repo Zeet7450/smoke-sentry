@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { devices, sensor_readings } from '@/lib/schema'
-import { eq, and, gte } from 'drizzle-orm'
+import { devices, sensorLogs } from '@/lib/schema'
+import { eq, and, gte, desc } from 'drizzle-orm'
 
 export async function GET(
   req: NextRequest,
@@ -28,22 +28,14 @@ export async function GET(
       return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 })
     }
 
-    const searchParams = req.nextUrl.searchParams
-    const hours = parseInt(searchParams.get('hours') || '24')
-    const startTime = Date.now() - (hours * 60 * 60 * 1000)
-
     const readings = await db.select()
-      .from(sensor_readings)
-      .where(
-        and(
-          eq(sensor_readings.device_id, id),
-          gte(sensor_readings.recorded_at, startTime)
-        )
-      )
-      .orderBy(sensor_readings.recorded_at)
-      .limit(1000)
+      .from(sensorLogs)
+      .where(eq(sensorLogs.device_id, id))
+      .orderBy(desc(sensorLogs.created_at))
+      .limit(100)
 
-    return NextResponse.json({ success: true, data: readings })
+    // Return in chronological order for chart
+    return NextResponse.json(readings.reverse())
   } catch (error) {
     console.error('Error fetching sensor readings:', error)
     return NextResponse.json({ 

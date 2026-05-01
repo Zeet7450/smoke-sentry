@@ -6,7 +6,6 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/SmokeToast';
 import { ConfirmDeleteModal } from '@/components/ui/ConfirmDeleteModal';
-import { SensorChart } from '@/components/SensorChart';
 
 export default function DevicesPage() {
   const [devices, setDevices] = useState<any[]>([]);
@@ -586,16 +585,6 @@ export default function DevicesPage() {
               >
                 Notifikasi
               </button>
-              <button
-                onClick={() => setSettingsTab('chart')}
-                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                  settingsTab === 'chart' 
-                    ? 'border-[#E8FF47] text-[#E8FF47]' 
-                    : 'border-transparent text-text-muted hover:text-white'
-                }`}
-              >
-                Grafik Sensor
-              </button>
             </div>
 
             <form onSubmit={handleSettingsSubmit} className="space-y-6">
@@ -918,13 +907,6 @@ export default function DevicesPage() {
                   >
                     Test Kirim Notifikasi
                   </Button>
-                </div>
-              )}
-
-              {/* Tab 4: Grafik Sensor */}
-              {settingsTab === 'chart' && (
-                <div className="space-y-4">
-                  <SensorChart deviceId={selectedDevice.id} />
                 </div>
               )}
 
