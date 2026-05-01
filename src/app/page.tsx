@@ -322,7 +322,7 @@ export default function Home() {
             </Card>
             <Card glow="none" className="text-center">
               <p className="text-5xl font-bold text-primary mb-2">3 sensor</p>
-              <p className="text-text-muted">Yang SmokeSentry pakai untuk deteksi akurat</p>
+              <p className="text-text-muted">Yang smoke sentry pakai untuk deteksi akurat</p>
             </Card>
           </div>
         </div>
@@ -417,14 +417,14 @@ export default function Home() {
               <div className="text-6xl font-bold text-primary mb-4">01</div>
               <h3 className="font-bold text-xl mb-2">Pasang & Nyalakan</h3>
               <p className="text-text-muted">
-                Colok SmokeSentry, konek ke WiFi lewat Telegram Bot
+                Colok smoke sentry, konek ke WiFi lewat Telegram Bot
               </p>
             </Card>
             <Card glow="none" className="text-center">
               <div className="text-6xl font-bold text-secondary mb-4">02</div>
               <h3 className="font-bold text-xl mb-2">Aktifkan Bot</h3>
               <p className="text-text-muted">
-                Chat @SmokeSentryBot, kirim /aktivasi [PRODUCT_ID]
+                Chat @smokeSentrybot, kirim /aktivasi [PRODUCT_ID]
               </p>
             </Card>
             <Card glow="none" className="text-center">

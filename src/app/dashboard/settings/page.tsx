@@ -13,12 +13,32 @@ export default function SettingsPage() {
     jam_tidur_mulai: '22:00',
     jam_tidur_selesai: '06:00',
     nama_lokasi: 'Rumah',
+    telegram_chat_id: '',
   });
+  const [botToken, setBotToken] = useState('');
 
   const handleSave = () => {
     // In production, this would save to the database
     console.log('Saving settings:', settings);
     alert('Pengaturan berhasil disimpan!');
+  };
+
+  const handleSaveBotToken = async () => {
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'telegram_bot_token', value: botToken }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('Bot token berhasil disimpan!');
+      } else {
+        alert('Gagal menyimpan bot token: ' + data.error);
+      }
+    } catch (err) {
+      alert('Gagal menyimpan bot token');
+    }
   };
 
   const handleDeleteDevice = () => {
@@ -33,7 +53,7 @@ export default function SettingsPage() {
     <div className="p-6 md:p-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Settings</h1>
-        <p className="text-text-muted">Konfigurasi perangkat SmokeSentry</p>
+        <p className="text-text-muted">Konfigurasi perangkat smoke sentry</p>
       </div>
 
       <div className="space-y-6">
@@ -51,6 +71,112 @@ export default function SettingsPage() {
               className="w-full bg-surface border border-border rounded-8px px-4 py-3 text-text focus:outline-none focus:border-primary"
               placeholder="Contoh: Rumah, Kamar, Dapur"
             />
+          </div>
+        </Card>
+
+        {/* Telegram Bot Token Configuration */}
+        <Card glow="none">
+          <h3 className="font-bold text-lg mb-4">Konfigurasi Telegram Bot</h3>
+          <p className="text-text-muted text-sm mb-4">
+            Bot token digunakan untuk semua device smoke sentry. Simpan token @smokeSentrybot di sini.
+          </p>
+          <div>
+            <label className="block text-text-muted text-sm mb-2">
+              Bot Token
+            </label>
+            <input
+              type="password"
+              value={botToken}
+              onChange={(e) => setBotToken(e.target.value)}
+              className="w-full bg-surface border border-border rounded-8px px-4 py-3 text-text focus:outline-none focus:border-primary"
+              placeholder="Masukkan token dari @BotFather"
+            />
+            <p className="text-text-muted text-xs mt-2">
+              Token tersimpan di environment variable server, tidak ditampilkan ke user lain.
+            </p>
+          </div>
+          <Button variant="primary" size="md" className="mt-4" onClick={handleSaveBotToken}>
+            Simpan Token
+          </Button>
+        </Card>
+
+        {/* Telegram Chat ID */}
+        <Card glow="none">
+          <h3 className="font-bold text-lg mb-4">Telegram Chat ID</h3>
+          <div>
+            <label className="block text-text-muted text-sm mb-2">
+              Telegram Chat ID untuk notifikasi
+            </label>
+            <input
+              type="text"
+              value={settings.telegram_chat_id}
+              onChange={(e) => setSettings({ ...settings, telegram_chat_id: e.target.value })}
+              className="w-full bg-surface border border-border rounded-8px px-4 py-3 text-text focus:outline-none focus:border-primary"
+              placeholder="Contoh: 123456789"
+            />
+            <p className="text-text-muted text-xs mt-2">
+              Chat ID ini akan digunakan untuk semua device Anda secara otomatis.
+            </p>
+          </div>
+
+          {/* Panduan Chat ID */}
+          <div style={{
+            background: '#0a0a14',
+            border: '1px solid #1e1e2e',
+            borderRadius: '0.75rem',
+            padding: '1rem',
+            marginTop: '1rem'
+          }}>
+            <p style={{
+              fontSize: '11px',
+              color: '#E8FF47',
+              fontWeight: 600,
+              letterSpacing: '0.8px',
+              textTransform: 'uppercase',
+              marginBottom: '10px'
+            }}>
+              💬 Cara Dapat Chat ID Kamu
+            </p>
+
+            <ol style={{ paddingLeft: '1.1rem', color: '#888899', fontSize: '13px', lineHeight: 1.8 }}>
+              <li>
+                Buka Telegram → cari{' '}
+                <a
+                  href="https://t.me/userinfobot"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: '#E8FF47', textDecoration: 'none', fontWeight: 600 }}
+                >
+                  @userinfobot
+                </a>
+              </li>
+              <li>Kirim sembarang pesan (misalnya: <code style={{ background: '#1a1a2e', padding: '1px 6px', borderRadius: '4px', color: '#ffffff' }}>hi</code>)</li>
+              <li>Bot akan balas dengan info akunmu, salin angka di baris <b style={{ color: '#ffffff' }}>Id:</b></li>
+              <li>Paste angka tersebut ke field di atas</li>
+            </ol>
+
+            <a
+              href="https://t.me/userinfobot"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'block',
+                textAlign: 'center',
+                background: 'transparent',
+                border: '1px solid #2a2a3d',
+                borderRadius: '8px',
+                color: '#888899',
+                fontSize: '12px',
+                padding: '8px',
+                textDecoration: 'none',
+                marginTop: '12px',
+                transition: 'border-color .15s, color .15s'
+              }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor='#E8FF47'; e.currentTarget.style.color='#E8FF47' }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor='#2a2a3d'; e.currentTarget.style.color='#888899' }}
+            >
+              🔍 Buka @userinfobot
+            </a>
           </div>
         </Card>
 

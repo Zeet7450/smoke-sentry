@@ -21,9 +21,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get device ID from product_id
+    // Get device ID from device_code
     const device = await sql`
-      SELECT id, current_status FROM devices WHERE product_id = ${product_id}
+      SELECT id, status FROM devices WHERE device_code = ${product_id}
     `;
 
     if (device.length === 0) {
@@ -34,55 +34,31 @@ export async function POST(request: NextRequest) {
     }
 
     const deviceId = device[0].id;
-    const previousStatus = device[0].current_status;
+    const previousStatus = device[0].status;
 
-    // Insert sensor log
+    // Insert sensor reading
     await sql`
-      INSERT INTO sensor_logs (device_id, mq2, mq135, flame, status)
-      VALUES (${deviceId}, ${mq2}, ${mq135}, ${flame}, ${status})
+      INSERT INTO sensor_readings (device_id, mq2_value, mq135_value, flame_value, is_alert)
+      VALUES (${deviceId}, ${mq2}, ${mq135}, ${flame}, ${status === 'BAHAYA'})
     `;
 
     // Update device status and last_seen
     await sql`
       UPDATE devices
-      SET current_status = ${status},
-          last_seen = NOW(),
-          is_online = true
+      SET status = ${status},
+          last_seen_at = NOW(),
+          updated_at = NOW()
       WHERE id = ${deviceId}
     `;
 
     // Check if we need to trigger alert (status changed to BAHAYA)
     if (status === 'BAHAYA' && previousStatus !== 'BAHAYA') {
-      // Get all users for this device
-      const users = await sql`
-        SELECT u.telegram_chat_id, u.email
-        FROM device_users du
-        JOIN users u ON du.user_id = u.id
-        WHERE du.device_id = ${deviceId}
+      // Create alert record
+      const alertType = determineAlertType(mq2, mq135, flame);
+      await sql`
+        INSERT INTO alerts (device_id, type, severity, mq2_value, mq135_value, flame_value, message, is_resolved)
+        VALUES (${deviceId}, ${alertType}, 'high', ${mq2}, ${mq135}, ${flame}, 'Alert detected', false)
       `;
-
-      // Check if snooze is active
-      const settings = await sql`
-        SELECT snooze_until FROM settings WHERE device_id = ${deviceId}
-      `;
-
-      const isSnoozed = settings.length > 0 && settings[0].snooze_until && new Date(settings[0].snooze_until) > new Date();
-
-      if (!isSnoozed) {
-        // Create alert record
-        const alertType = determineAlertType(mq2, mq135, flame);
-        await sql`
-          INSERT INTO alerts (device_id, jenis, is_active)
-          VALUES (${deviceId}, ${alertType}, true)
-        `;
-
-        // Send Telegram alerts (placeholder - will implement with bot library)
-        for (const user of users) {
-          if (user.telegram_chat_id) {
-            await sendTelegramAlert(user.telegram_chat_id, alertType, product_id);
-          }
-        }
-      }
     }
 
     // Check if status changed from BAHAYA to AMAN
@@ -90,22 +66,9 @@ export async function POST(request: NextRequest) {
       // Close active alerts
       await sql`
         UPDATE alerts
-        SET is_active = false, waktu_selesai = NOW()
-        WHERE device_id = ${deviceId} AND is_active = true
+        SET is_resolved = true, resolved_at = NOW()
+        WHERE device_id = ${deviceId} AND is_resolved = false
       `;
-
-      // Send "all clear" notification
-      const users = await sql`
-        SELECT u.telegram_chat_id FROM device_users du
-        JOIN users u ON du.user_id = u.id
-        WHERE du.device_id = ${deviceId}
-      `;
-
-      for (const user of users) {
-        if (user.telegram_chat_id) {
-          await sendTelegramAllClear(user.telegram_chat_id, product_id);
-        }
-      }
     }
 
     return NextResponse.json({ ok: true });
@@ -120,19 +83,8 @@ export async function POST(request: NextRequest) {
 
 function determineAlertType(mq2: number, mq135: number, flame: number): string {
   const alerts = [];
-  if (mq2 > 450) alerts.push('GAS');
-  if (mq135 > 450) alerts.push('VAPE');
-  if (flame > 3500) alerts.push('API');
-  return alerts.length > 0 ? alerts.join('+') : 'UNKNOWN';
-}
-
-async function sendTelegramAlert(chatId: number, alertType: string, productId: string) {
-  // Placeholder for Telegram bot implementation
-  // Will be implemented with node-telegram-bot-api
-  console.log(`Sending alert to ${chatId}: ${alertType} detected on device ${productId}`);
-}
-
-async function sendTelegramAllClear(chatId: number, productId: string) {
-  // Placeholder for Telegram bot implementation
-  console.log(`Sending all clear to ${chatId} for device ${productId}`);
+  if (mq2 > 450) alerts.push('smoke');
+  if (mq135 > 450) alerts.push('vape');
+  if (flame > 3500) alerts.push('flame');
+  return alerts.length > 0 ? alerts.join('+') : 'unknown';
 }

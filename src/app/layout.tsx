@@ -4,6 +4,7 @@ import "./globals.css";
 import { CustomCursor } from "@/components/ui/CustomCursor";
 import { PageTransition } from "@/components/ui/PageTransition";
 import { Providers } from "@/components/Providers";
+import { ToastProvider } from "@/components/ui/SmokeToast";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -36,10 +37,12 @@ export default function RootLayout({
       className={`${inter.variable} ${syne.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <Providers>
-          <CustomCursor />
-          <PageTransition>{children}</PageTransition>
-        </Providers>
+        <ToastProvider>
+          <Providers>
+            <CustomCursor />
+            <PageTransition>{children}</PageTransition>
+          </Providers>
+        </ToastProvider>
       </body>
     </html>
   );

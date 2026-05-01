@@ -147,7 +147,7 @@ export default function RegisterPage() {
             variant="outline"
             size="md"
             className="w-full flex items-center justify-center gap-3"
-            onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
+            onClick={() => signIn('google', { callbackUrl: '/dashboard', prompt: 'select_account' })}
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path
@@ -173,7 +173,7 @@ export default function RegisterPage() {
 
         <p className="text-center text-text-muted text-sm mt-6">
           Setelah masuk, aktifkan device kamu lewat Telegram Bot{' '}
-          <span className="text-primary">@SmokeSentryBot</span> dengan{' '}
+          <span className="text-primary">@smokeSentrybot</span> dengan{' '}
           <span className="text-primary">/aktivasi [ID]</span>
         </p>
 

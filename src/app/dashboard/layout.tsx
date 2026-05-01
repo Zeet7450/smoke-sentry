@@ -1,10 +1,12 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { useToast } from '@/components/ui/SmokeToast';
 
 export default function DashboardLayout({
   children,
@@ -13,6 +15,9 @@ export default function DashboardLayout({
 }) {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const { showToast } = useToast();
 
   useEffect(() => {
     // Only redirect to login if DATABASE_URL is configured (full app mode)
@@ -20,6 +25,31 @@ export default function DashboardLayout({
       router.push('/login');
     }
   }, [status, router]);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await signOut({
+        callbackUrl: '/',
+        redirect: true,
+      });
+      showToast({
+        type: 'success',
+        title: 'Logout Berhasil',
+        message: 'Kamu telah logout dari SmokeSentry.',
+        autoDismiss: true,
+      });
+    } catch (error) {
+      showToast({
+        type: 'danger',
+        title: 'Logout Gagal',
+        message: 'Terjadi kesalahan saat logout.',
+        autoDismiss: true,
+      });
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   if (status === 'loading') {
     return <div className="min-h-screen bg-background flex items-center justify-center">Loading...</div>;
@@ -65,7 +95,7 @@ export default function DashboardLayout({
             variant="danger"
             size="md"
             className="w-full"
-            onClick={() => router.push('/api/auth/signout')}
+            onClick={() => setIsLogoutModalOpen(true)}
           >
             Logout
           </Button>
@@ -96,6 +126,37 @@ export default function DashboardLayout({
       <main className="md:ml-64 pb-20 md:pb-0">
         {children}
       </main>
+
+      {/* Logout Confirmation Modal */}
+      {isLogoutModalOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80">
+          <Card glow="danger" className="w-full max-w-md p-6">
+            <h2 className="text-2xl font-bold mb-4">Konfirmasi Logout</h2>
+            <p className="text-text-muted mb-6">
+              Apakah kamu yakin ingin logout dari SmokeSentry?
+            </p>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                size="md"
+                onClick={() => setIsLogoutModalOpen(false)}
+                className="flex-1"
+              >
+                Batal
+              </Button>
+              <Button
+                variant="danger"
+                size="md"
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                className="flex-1"
+              >
+                {isLoggingOut ? 'Logging out...' : 'Ya, Logout'}
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
