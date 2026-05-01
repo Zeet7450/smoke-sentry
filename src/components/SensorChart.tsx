@@ -4,42 +4,42 @@ import { LineChart, Line, XAxis, YAxis, Tooltip,
 import { useEffect, useState, useCallback } from 'react'
 
 export function SensorChart({ deviceId, initialData }: { deviceId: string; initialData?: any[] }) {
-  const [chartData, setChartData] = useState<any[]>(initialData ?? [])
-  const [loading, setLoading] = useState(false)
+  const [chartData, setChartData] = useState(() => {
+    if (!initialData || initialData.length === 0) return [];
+    return initialData;
+  });
+  const [loading, setLoading] = useState(false);
 
   const fetchReadings = useCallback(async () => {
-    setLoading(true)
     try {
       const res = await fetch(`/api/devices/${deviceId}/readings`)
-      if (!res.ok) throw new Error('Failed to fetch')
-      const json = await res.json()
+      if (!res.ok) return;
+      const json = await res.json();
 
-      const mapped = json.map((d: any) => ({
-        time: new Date(d.created_at).toLocaleTimeString('id-ID', {
-          hour: '2-digit', minute: '2-digit', second: '2-digit'
-        }),
-        mq2:   d.mq2 ?? 0,
-        mq135: d.mq135 ?? 0,
-        flame: d.flame ?? 0,
-      }))
-
-      setChartData(mapped)
+      if (json && json.length > 0) {
+        const mapped = json.map((d: any) => ({
+          time: new Date(d.created_at).toLocaleTimeString('id-ID', {
+            hour: '2-digit', minute: '2-digit', second: '2-digit'
+          }),
+          mq2:   d.mq2 ?? 0,
+          mq135: d.mq135 ?? 0,
+          flame: d.flame ?? 0,
+        }));
+        setChartData(mapped);
+      }
     } catch (err) {
-      console.error('Chart fetch error:', err)
-    } finally {
-      setLoading(false)
+      console.error('Chart refresh error:', err);
     }
-  }, [deviceId])
+  }, [deviceId]);
 
   useEffect(() => {
-    if (!deviceId) return
-    if (initialData && initialData.length > 0) {
-      setChartData(initialData)
-    }
-    fetchReadings()
-    const interval = setInterval(fetchReadings, 5000)
-    return () => clearInterval(interval)
-  }, [deviceId, initialData, fetchReadings])
+    if (!deviceId) return;
+    
+    // Start auto-refresh after 5 seconds (not immediately)
+    // because initialData is already provided
+    const interval = setInterval(fetchReadings, 5000);
+    return () => clearInterval(interval);
+  }, [deviceId, fetchReadings]);
 
   const chartHeight = typeof window !== 'undefined' && window.innerWidth < 768 ? 250 : 350
 

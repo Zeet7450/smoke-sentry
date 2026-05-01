@@ -8,10 +8,9 @@ import { SensorChart } from '@/components/SensorChart';
 
 export function DeviceDetailClient({ device, initialReadings }: { device: any; initialReadings: any[] }) {
   const router = useRouter();
-  const [chartData, setChartData] = useState<any[]>([]);
-
-  useEffect(() => {
-    const mapped = initialReadings.map((d: any) => ({
+  const [chartData, setChartData] = useState(() => {
+    if (!initialReadings || initialReadings.length === 0) return [];
+    return initialReadings.map((d: any) => ({
       time: new Date(d.created_at).toLocaleTimeString('id-ID', {
         hour: '2-digit', minute: '2-digit', second: '2-digit'
       }),
@@ -19,8 +18,7 @@ export function DeviceDetailClient({ device, initialReadings }: { device: any; i
       mq135: d.mq135 ?? 0,
       flame: d.flame ?? 0,
     }));
-    setChartData(mapped);
-  }, [initialReadings]);
+  });
 
   const isOnline = device.last_seen 
     ? (Date.now() - new Date(device.last_seen).getTime()) < 60_000 

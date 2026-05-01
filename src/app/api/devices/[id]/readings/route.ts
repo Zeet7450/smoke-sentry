@@ -11,11 +11,6 @@ export async function GET(
 ) {
   try {
     const { id } = await params
-    
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
-    }
 
     const device = await db.select().from(devices)
       .where(eq(devices.id, id))
@@ -23,10 +18,6 @@ export async function GET(
 
     if (!device[0]) {
       return NextResponse.json({ success: false, error: 'Device not found' }, { status: 404 })
-    }
-
-    if (device[0].owner_id !== session.user.id) {
-      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 })
     }
 
     const readings = await db.select()
