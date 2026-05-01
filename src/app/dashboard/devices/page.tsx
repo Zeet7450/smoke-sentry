@@ -824,24 +824,6 @@ export default function DevicesPage() {
                     Chat ID untuk kirim notifikasi Telegram ke device ini
                   </p>
                   
-                  {/* ── Panduan Singkat Chat ID ── */}
-                  <div style={{
-                    background: '#0a0a14',
-                    border: '1px solid #1e1e2e',
-                    borderRadius: '0.5rem',
-                    padding: '0.75rem',
-                    marginBottom: '1rem'
-                  }}>
-                    <p style={{ fontSize: '11px', color: '#E8FF47', fontWeight: 600, marginBottom: '6px' }}>
-                      Cara dapat Chat ID kamu:
-                    </p>
-                    <ul style={{ paddingLeft: '1rem', color: '#888899', fontSize: '12px', lineHeight: 1.6, margin: 0 }}>
-                      <li>Buka Telegram → cari <a href="https://t.me/userinfobot" target="_blank" rel="noopener noreferrer" style={{ color: '#E8FF47', textDecoration: 'none', fontWeight: 600 }}>@userinfobot</a></li>
-                      <li>Kirim sembarang pesan (misalnya: hi)</li>
-                      <li>Bot akan balas dengan info akunmu, salin angka di baris Id:</li>
-                    </ul>
-                  </div>
-
                   {/* ── Panduan Chat ID ── */}
                   <div style={{
                     background: '#0a0a14',
