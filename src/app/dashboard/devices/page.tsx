@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/SmokeToast';
 import { ConfirmDeleteModal } from '@/components/ui/ConfirmDeleteModal';
+import { SensorChart } from '@/components/SensorChart';
 
 export default function DevicesPage() {
   const [devices, setDevices] = useState<any[]>([]);
@@ -14,6 +15,7 @@ export default function DevicesPage() {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState<any>(null);
+  const [selectedDeviceReadings, setSelectedDeviceReadings] = useState<any[]>([]);
   const [formData, setFormData] = useState({ name: '', device_code: '', location: '' });
   const [shareFormData, setShareFormData] = useState({ email: '', role: 'viewer', receive_notifications: true });
   const [settingsFormData, setSettingsFormData] = useState({ 
@@ -256,6 +258,18 @@ export default function DevicesPage() {
     }
   };
 
+  const fetchDeviceReadings = async (deviceId: string) => {
+    try {
+      const res = await fetch(`/api/devices/${deviceId}/readings`);
+      const data = await res.json();
+      console.log('[DevicesPage] Fetched readings for device:', deviceId, data);
+      setSelectedDeviceReadings(data || []);
+    } catch (error) {
+      console.error('Error fetching device readings:', error);
+      setSelectedDeviceReadings([]);
+    }
+  };
+
   const openSettingsModal = (device: any) => {
     setSelectedDevice(device);
     setSettingsFormData({
@@ -300,7 +314,15 @@ export default function DevicesPage() {
             <Card key={device.id} glow="none">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-xl font-bold mb-2">{device.name}</h3>
+                  <h3 
+                    className="text-xl font-bold mb-2 cursor-pointer hover:text-[#E8FF47] transition-colors"
+                    onClick={() => {
+                      setSelectedDevice(device);
+                      fetchDeviceReadings(device.id);
+                    }}
+                  >
+                    {device.name}
+                  </h3>
                   <p className="text-text-muted text-sm mb-4">
                     Device Code: {device.device_code}
                   </p>
@@ -339,6 +361,52 @@ export default function DevicesPage() {
                 <p className="text-text-muted text-sm mt-4">
                   Lokasi: {device.location}
                 </p>
+              )}
+              
+              {/* Inline chart and table when device is selected */}
+              {selectedDevice?.id === device.id && (
+                <div className="mt-6 pt-6 border-t border-[#1E1E2E]">
+                  <h2 className="text-xl font-bold mb-4">Grafik Sensor</h2>
+                  <SensorChart deviceId={device.id} initialData={selectedDeviceReadings} />
+                  
+                  <h2 className="text-xl font-bold mb-4 mt-6">Pembacaan Sensor Terbaru</h2>
+                  <Card glow="none" className="p-4">
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={{ minWidth: '500px', width: '100%', borderCollapse: 'collapse' }}>
+                        <thead>
+                          <tr style={{ borderBottom: '1px solid #1e1e2e' }}>
+                            <th style={{ padding: '12px', textAlign: 'left', fontSize: '11px', color: '#666688' }}>Waktu</th>
+                            <th style={{ padding: '12px', textAlign: 'left', fontSize: '11px', color: '#666688' }}>MQ2</th>
+                            <th style={{ padding: '12px', textAlign: 'left', fontSize: '11px', color: '#666688' }}>MQ135</th>
+                            <th style={{ padding: '12px', textAlign: 'left', fontSize: '11px', color: '#666688' }}>Flame</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {selectedDeviceReadings.length === 0 ? (
+                            <tr>
+                              <td colSpan={4} style={{ padding: '24px', textAlign: 'center', color: '#888899', fontSize: '13px' }}>
+                                Belum ada data sensor
+                              </td>
+                            </tr>
+                          ) : (
+                            selectedDeviceReadings.slice(0, 10).map((row, i) => (
+                              <tr key={i} style={{ borderBottom: '1px solid #1e1e2e' }}>
+                                <td style={{ padding: '12px', fontSize: '13px', color: '#d0d0e0' }}>
+                                  {new Date(row.created_at).toLocaleTimeString('id-ID', {
+                                    hour: '2-digit', minute: '2-digit', second: '2-digit'
+                                  })}
+                                </td>
+                                <td style={{ padding: '12px', fontSize: '13px', color: '#d0d0e0' }}>{row.mq2 ?? 0}</td>
+                                <td style={{ padding: '12px', fontSize: '13px', color: '#d0d0e0' }}>{row.mq135 ?? 0}</td>
+                                <td style={{ padding: '12px', fontSize: '13px', color: '#d0d0e0' }}>{row.flame ?? 0}</td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </Card>
+                </div>
               )}
             </Card>
           ))

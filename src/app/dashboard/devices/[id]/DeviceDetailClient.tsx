@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -7,31 +8,16 @@ import { SensorChart } from '@/components/SensorChart';
 
 export function DeviceDetailClient({ device, initialReadings }: { device: any; initialReadings: any[] }) {
   const router = useRouter();
-
-  // Convert readings to chart format with safe Date handling
-  const chartData = initialReadings.map((d: any) => {
-    const rawDate = d.created_at;
-    let time = '--:--:--';
-    
-    if (rawDate) {
-      try {
-        const date = new Date(rawDate);
-        if (!isNaN(date.getTime())) {
-          time = date.toLocaleTimeString('id-ID', {
-            hour: '2-digit', minute: '2-digit', second: '2-digit'
-          });
-        }
-      } catch (e) {
-        console.error('Date parse error:', e);
-      }
-    }
-
-    return {
-      time,
-      mq2: Number(d.mq2) || 0,
-      mq135: Number(d.mq135) || 0,
-      flame: Number(d.flame) || 0,
-    };
+  const [chartData, setChartData] = useState(() => {
+    if (!initialReadings || initialReadings.length === 0) return [];
+    return initialReadings.map((d: any) => ({
+      time: new Date(d.created_at).toLocaleTimeString('id-ID', {
+        hour: '2-digit', minute: '2-digit', second: '2-digit'
+      }),
+      mq2: d.mq2 ?? 0,
+      mq135: d.mq135 ?? 0,
+      flame: d.flame ?? 0,
+    }));
   });
 
   const isOnline = device.last_seen

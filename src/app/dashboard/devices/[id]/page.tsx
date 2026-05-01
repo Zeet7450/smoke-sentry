@@ -51,6 +51,8 @@ export default async function DeviceDetailPage({ params }: { params: Promise<{ i
     .orderBy(desc(sensorLogs.created_at))
     .limit(100)
 
+  console.log('[Server] Raw readings from DB:', readings.slice(0, 3));
+
   // Convert Date objects to ISO strings for serialization
   const chronologicalReadings = readings.reverse().map(r => ({
     ...r,
@@ -58,6 +60,8 @@ export default async function DeviceDetailPage({ params }: { params: Promise<{ i
       ? r.created_at.toISOString()
       : String(r.created_at)
   }))
+
+  console.log('[Server] ChronologicalReadings passed to client:', chronologicalReadings.slice(0, 3));
 
   return <DeviceDetailClient device={device[0]} initialReadings={chronologicalReadings} />
 }
