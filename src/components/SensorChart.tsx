@@ -4,9 +4,6 @@ import { LineChart, Line, XAxis, YAxis, Tooltip,
 import { useEffect, useState, useCallback } from 'react'
 
 export function SensorChart({ deviceId, initialData }: { deviceId: string; initialData?: any[] }) {
-  console.log('[SensorChart] initialData:', initialData);
-  console.log('[SensorChart] initialData length:', initialData?.length);
-  
   const mapToChartFormat = (data: any[]) =>
     data.map((d) => {
       // Handle semua kemungkinan format: Date object, string ISO, timestamp number
@@ -36,13 +33,17 @@ export function SensorChart({ deviceId, initialData }: { deviceId: string; initi
     })
 
   const [chartData, setChartData] = useState(() => {
-    console.log('[SensorChart] Initializing chartData');
     if (!initialData || initialData.length === 0) return []
-    const mapped = mapToChartFormat(initialData);
-    console.log('[SensorChart] Mapped chartData:', mapped);
-    return mapped
+    return mapToChartFormat(initialData)
   });
   const [loading, setLoading] = useState(false);
+
+  // Update chartData when initialData changes
+  useEffect(() => {
+    if (initialData && initialData.length > 0) {
+      setChartData(mapToChartFormat(initialData));
+    }
+  }, [initialData]);
 
   const fetchReadings = useCallback(async () => {
     try {

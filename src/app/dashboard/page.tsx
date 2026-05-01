@@ -6,46 +6,15 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { motion } from 'framer-motion';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-} from 'chart.js';
-import { Line } from 'react-chartjs-2';
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
-);
+import { SensorChart } from '@/components/SensorChart';
 
 interface Device {
   id: string;
   name: string;
   device_code: string;
   location: string;
-  status: 'online' | 'offline' | 'warning' | 'alert';
-  last_seen_at: string;
-}
-
-interface SensorReading {
-  id: string;
-  device_id: string;
-  mq2_value: number;
-  mq135_value: number;
-  flame_value: number;
-  flame_detected: boolean;
-  is_alert: boolean;
-  recorded_at: string;
+  isOnline: boolean;
+  last_seen: string;
 }
 
 interface DashboardStats {
@@ -65,33 +34,28 @@ export default function DashboardPage() {
     normalSensors: 0,
   });
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
-  const [sensorData, setSensorData] = useState<SensorReading[]>([]);
+  const [selectedDeviceReadings, setSelectedDeviceReadings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchDevices();
   }, []);
 
-  useEffect(() => {
-    if (selectedDevice) {
-      fetchSensorData(selectedDevice.id);
-    }
-  }, [selectedDevice]);
-
   const fetchDevices = async () => {
     try {
       const res = await fetch('/api/devices');
       const data = await res.json();
-      if (data.success) {
+      if (data.success && data.data) {
         setDevices(data.data);
         if (data.data.length > 0) {
           setSelectedDevice(data.data[0]);
+          fetchDeviceReadings(data.data[0].id);
         }
         setStats({
           totalDevices: data.data.length,
-          onlineDevices: data.data.filter((d: Device) => d.status === 'online').length,
-          alertToday: 0, // Would fetch from alerts API
-          normalSensors: data.data.filter((d: Device) => d.status === 'online').length,
+          onlineDevices: data.data.filter((d: Device) => d.isOnline).length,
+          alertToday: 0,
+          normalSensors: data.data.filter((d: Device) => d.isOnline).length,
         });
       }
     } catch (error) {
@@ -101,75 +65,18 @@ export default function DashboardPage() {
     }
   };
 
-  const fetchSensorData = async (deviceId: string) => {
+  const fetchDeviceReadings = async (deviceId: string) => {
     try {
-      const res = await fetch(`/api/devices/${deviceId}/readings?hours=24`);
-      const data = await res.json();
-      if (data.success) {
-        setSensorData(data.data);
-      } else {
-        setSensorData(data); // Try using data directly if not wrapped
+      const res = await fetch(`/api/devices/${deviceId}/readings`);
+      if (!res.ok) {
+        setSelectedDeviceReadings([]);
+        return;
       }
+      const data = await res.json();
+      setSelectedDeviceReadings(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error('Error fetching sensor data:', error);
+      setSelectedDeviceReadings([]);
     }
-  };
-
-  const chartData = {
-    labels: sensorData.slice(0, 50).reverse().map((d) => new Date(d.recorded_at).toLocaleTimeString()),
-    datasets: [
-      {
-        label: 'MQ-2 (Gas)',
-        data: sensorData.slice(0, 50).reverse().map((d) => d.mq2_value || 0),
-        borderColor: '#3B82F6',
-        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-        tension: 0.4,
-      },
-      {
-        label: 'MQ-135 (Vape)',
-        data: sensorData.slice(0, 50).reverse().map((d) => d.mq135_value || 0),
-        borderColor: '#8B5CF6',
-        backgroundColor: 'rgba(139, 92, 246, 0.1)',
-        tension: 0.4,
-      },
-      {
-        label: 'Flame',
-        data: sensorData.slice(0, 50).reverse().map((d) => d.flame_value || 0),
-        borderColor: '#EF4444',
-        backgroundColor: 'rgba(239, 68, 68, 0.1)',
-        tension: 0.4,
-      },
-    ],
-  };
-
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        labels: {
-          color: '#F0F0F0',
-        },
-      },
-    },
-    scales: {
-      x: {
-        ticks: {
-          color: '#6B6B7A',
-        },
-        grid: {
-          color: '#1E1E2E',
-        },
-      },
-      y: {
-        ticks: {
-          color: '#6B6B7A',
-        },
-        grid: {
-          color: '#1E1E2E',
-        },
-      },
-    },
   };
 
   if (loading) {
@@ -244,7 +151,10 @@ export default function DashboardPage() {
               {devices.map((device) => (
                 <button
                   key={device.id}
-                  onClick={() => setSelectedDevice(device)}
+                  onClick={() => {
+                    setSelectedDevice(device);
+                    fetchDeviceReadings(device.id);
+                  }}
                   className={`px-4 py-2 rounded-lg border transition-colors ${
                     selectedDevice?.id === device.id
                       ? 'border-[#E8FF47] bg-[#E8FF47]/10'
@@ -254,7 +164,7 @@ export default function DashboardPage() {
                   <div className="flex items-center gap-2">
                     <div
                       className={`w-2 h-2 rounded-full ${
-                        device.status === 'online' ? 'bg-green-500' : 'bg-red-500'
+                        device.isOnline ? 'bg-green-500' : 'bg-red-500'
                       }`}
                     />
                     <span className="font-medium">{device.name}</span>
@@ -277,19 +187,11 @@ export default function DashboardPage() {
           <Card>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold">Grafik Sensor - {selectedDevice.name}</h2>
-              <Badge variant={selectedDevice.status === 'online' ? 'safe' : 'danger'}>
-                {selectedDevice.status.toUpperCase()}
+              <Badge variant={selectedDevice.isOnline ? 'safe' : 'danger'}>
+                {selectedDevice.isOnline ? 'ONLINE' : 'OFFLINE'}
               </Badge>
             </div>
-            {sensorData.length > 0 ? (
-              <div className="h-80">
-                <Line data={chartData} options={chartOptions} />
-              </div>
-            ) : (
-              <div className="h-80 flex items-center justify-center">
-                <p className="text-text-muted">Belum ada data sensor</p>
-              </div>
-            )}
+            <SensorChart deviceId={selectedDevice.id} initialData={selectedDeviceReadings} />
           </Card>
         </motion.div>
       )}
@@ -308,33 +210,27 @@ export default function DashboardPage() {
                 <thead>
                   <tr className="border-b border-border">
                     <th className="text-left py-3 px-4 text-text-muted text-sm">Waktu</th>
-                    <th className="text-left py-3 px-4 text-text-muted text-sm">MQ-2</th>
-                    <th className="text-left py-3 px-4 text-text-muted text-sm">MQ-135</th>
+                    <th className="text-left py-3 px-4 text-text-muted text-sm">MQ2</th>
+                    <th className="text-left py-3 px-4 text-text-muted text-sm">MQ135</th>
                     <th className="text-left py-3 px-4 text-text-muted text-sm">Flame</th>
-                    <th className="text-left py-3 px-4 text-text-muted text-sm">Status</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {sensorData.length === 0 ? (
+                  {selectedDeviceReadings.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="py-8 text-center text-text-muted">
+                      <td colSpan={4} className="py-8 text-center text-text-muted">
                         Belum ada data sensor
                       </td>
                     </tr>
                   ) : (
-                    sensorData.slice(0, 10).map((reading) => (
-                      <tr key={reading.id} className="border-b border-border">
+                    selectedDeviceReadings.slice(0, 10).map((reading: any, index: number) => (
+                      <tr key={index} className="border-b border-border">
                         <td className="py-3 px-4 text-sm">
-                          {new Date(reading.recorded_at).toLocaleString('id-ID')}
+                          {reading.created_at ? new Date(reading.created_at).toLocaleString('id-ID') : '-'}
                         </td>
-                        <td className="py-3 px-4 text-sm">{reading.mq2_value || '-'}</td>
-                        <td className="py-3 px-4 text-sm">{reading.mq135_value || '-'}</td>
-                        <td className="py-3 px-4 text-sm">{reading.flame_value || '-'}</td>
-                        <td className="py-3 px-4">
-                          <Badge variant={reading.is_alert ? 'danger' : 'safe'}>
-                            {reading.is_alert ? 'ALERT' : 'NORMAL'}
-                          </Badge>
-                        </td>
+                        <td className="py-3 px-4 text-sm font-bold">{reading.mq2 ?? 0}</td>
+                        <td className="py-3 px-4 text-sm font-bold">{reading.mq135 ?? 0}</td>
+                        <td className="py-3 px-4 text-sm font-bold">{reading.flame ?? 0}</td>
                       </tr>
                     ))
                   )}
