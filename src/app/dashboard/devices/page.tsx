@@ -380,7 +380,7 @@ export default function DevicesPage() {
           <ul className="list-disc list-inside space-y-1 text-text-muted text-sm">
             <li>Untuk ganti WiFi: tekan tombol BOOT di ESP32 saat menyala, lepas setelah buzzer bunyi → ulangi dari langkah 2</li>
             <li>Jika device tidak muncul Online setelah 30 detik, cek kembali Device Code dan API Key yang dimasukkan</li>
-            <li>Device bisa diakses lokal via: http://smokesentry.local (hanya dari jaringan WiFi yang sama)</li>
+            <li>Device bisa diakses lokal via: http://192.168.4.1 (hanya dari jaringan WiFi yang sama)</li>
           </ul>
         </div>
       </Card>
@@ -815,7 +815,21 @@ export default function DevicesPage() {
                   <input
                     type="text"
                     value={settingsFormData.telegramchatid}
-                    onChange={(e) => setSettingsFormData({ ...settingsFormData, telegramchatid: e.target.value })}
+                    onChange={async (e) => {
+                      setSettingsFormData({ ...settingsFormData, telegramchatid: e.target.value });
+                      // Auto-save when Telegram Chat ID is changed
+                      if (e.target.value.trim() !== '') {
+                        try {
+                          await fetch(`/api/devices/${selectedDevice.id}`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ telegramchatid: e.target.value })
+                          });
+                        } catch (error) {
+                          console.error('Error auto-saving Telegram Chat ID:', error);
+                        }
+                      }
+                    }}
                     autoComplete="off"
                     className="w-full px-4 py-2 bg-black border border-[#E8FF47] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E8FF47]"
                     placeholder="Contoh: 123456789"
@@ -938,24 +952,38 @@ export default function DevicesPage() {
                     variant="outline"
                     size="md"
                     onClick={async () => {
-                      const res = await fetch('/api/test-notification', { 
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ deviceId: selectedDevice.id })
-                      });
-                      const data = await res.json();
-                      if (data.success) {
-                        showToast({
-                          type: 'info',
-                          title: 'Test Dikirim',
-                          message: 'Pesan test dikirim ke Telegram. Cek bot @SmokeSentryBot.',
-                          autoDismiss: true,
+                      console.log('[Test Notification] Device ID:', selectedDevice.id);
+                      console.log('[Test Notification] Device:', selectedDevice);
+                      try {
+                        const res = await fetch('/api/test-notification', { 
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ deviceId: selectedDevice.id })
                         });
-                      } else {
+                        console.log('[Test Notification] Response status:', res.status);
+                        const data = await res.json();
+                        console.log('[Test Notification] Response data:', data);
+                        if (data.success) {
+                          showToast({
+                            type: 'info',
+                            title: 'Test Dikirim',
+                            message: 'Pesan test dikirim ke Telegram. Cek bot @SmokeSentryBot.',
+                            autoDismiss: true,
+                          });
+                        } else {
+                          showToast({
+                            type: 'danger',
+                            title: 'Gagal',
+                            message: data.error || 'Gagal mengirim test notification.',
+                            autoDismiss: true,
+                          });
+                        }
+                      } catch (error) {
+                        console.error('[Test Notification] Error:', error);
                         showToast({
                           type: 'danger',
                           title: 'Gagal',
-                          message: data.error || 'Gagal mengirim test notification.',
+                          message: 'Terjadi kesalahan koneksi.',
                           autoDismiss: true,
                         });
                       }
