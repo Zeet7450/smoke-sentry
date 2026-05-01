@@ -8,15 +8,26 @@ export function SensorChart({ deviceId }: { deviceId: string }) {
   const [range, setRange] = useState('1h')
 
   const fetchData = async () => {
-    const res = await fetch(`/api/devices/${deviceId}/logs?range=${range}&limit=100`)
-    const json = await res.json()
-    setData(json.logs?.map((l: any) => ({
-      time:  new Date(l.created_at).toLocaleTimeString('id-ID',
-               { hour: '2-digit', minute: '2-digit' }),
-      MQ2:   l.mq2,
-      MQ135: l.mq135,
-      Flame: l.flame,
-    })) ?? [])
+    try {
+      const res = await fetch(`/api/devices/${deviceId}/logs?range=${range}&limit=100`)
+      const json = await res.json()
+      
+      if (json.logs && Array.isArray(json.logs)) {
+        const chartData = json.logs.map((l: any) => ({
+          time:  new Date(l.created_at).toLocaleTimeString('id-ID',
+                   { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+          MQ2:   l.mq2,
+          MQ135: l.mq135,
+          Flame: l.flame,
+        }))
+        setData(chartData)
+      } else {
+        setData([])
+      }
+    } catch (error) {
+      console.error('Error fetching sensor data:', error)
+      setData([])
+    }
   }
 
   useEffect(() => { fetchData() }, [deviceId, range])

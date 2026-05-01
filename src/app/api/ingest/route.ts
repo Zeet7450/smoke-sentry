@@ -54,7 +54,6 @@ export async function POST(req: NextRequest) {
 
     const device = rows[0]
     const now    = new Date()
-    const nowMs  = Date.now()
 
     // Validate API key if device has one
     if (device.apikey && api_key && device.apikey !== api_key) {
@@ -68,13 +67,15 @@ export async function POST(req: NextRequest) {
     await db
       .update(devices)
       .set({
-        status:       'online',
-        last_seen_at: nowMs,
-        lastseenat:   now,
-        mq2_last:     Number(mq2_value),
-        mq135_last:   Number(mq135_value),
-        flame_last:   Number(flame_value),
-        alert_last:   Boolean(is_alert),
+        status:     'online',
+        last_seen:  now,
+        is_online:  true,
+        last_seen_at: Date.now(),
+        lastseenat: now,
+        mq2_last:   Number(mq2_value),
+        mq135_last: Number(mq135_value),
+        flame_last: Number(flame_value),
+        alert_last: Boolean(is_alert),
       })
       .where(eq(devices.id, device.id))
 

@@ -11,15 +11,19 @@ export async function GET() {
 
     const now = Date.now()
     const nowTimestamp = new Date()
-    const thirtySecondsAgo = new Date(Date.now() - 30000)
+    const sixtySecondsAgo = new Date(Date.now() - 60_000)
 
-    // Set devices to offline if they haven't been seen in 30 seconds
+    // Set devices to offline if they haven't been seen in 60 seconds
     const result = await db.update(devices)
-      .set({ status: 'offline', updated_at: now })
+      .set({ 
+        status: 'offline', 
+        is_online: false,
+        updated_at: now 
+      })
       .where(
         and(
           eq(devices.status, 'online'),
-          lt(devices.lastseenat, thirtySecondsAgo)
+          lt(devices.last_seen, sixtySecondsAgo)
         )
       )
       .returning()

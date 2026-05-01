@@ -75,6 +75,8 @@ export const devices = pgTable('devices', {
   flame_threshold: integer('flame_threshold').default(500),
   last_seen_at: bigint('last_seen_at', { mode: 'number' }),
   lastseenat:   timestamp('lastseenat'),
+  last_seen:    timestamp('last_seen'),
+  is_online:    boolean('is_online').default(false),
   mq2_last:     integer('mq2_last').default(0),
   mq135_last:   integer('mq135_last').default(0),
   flame_last:   integer('flame_last').default(0),

@@ -32,7 +32,7 @@ export async function GET() {
     const now = Date.now()
     const dataWithStatus = data.map(d => ({
       ...d,
-      isOnline: d.last_seen_at ? (now - d.last_seen_at) < 15000 : false
+      isOnline: d.last_seen ? (now - new Date(d.last_seen).getTime()) < 60_000 : false
     }))
 
     return NextResponse.json({ success: true, data: dataWithStatus })

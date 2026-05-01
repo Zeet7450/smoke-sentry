@@ -341,14 +341,43 @@ export default function DevicesPage() {
       </div>
 
       <Card glow="none" className="mt-8">
-        <h3 className="font-bold text-lg mb-4">Cara Menambah Device Baru</h3>
-        <ol className="list-decimal list-inside space-y-2 text-text-muted">
-          <li>Pasang SmokeSentry di lokasi yang diinginkan</li>
-          <li>Nyalakan device dan hubungkan ke WiFi</li>
-          <li>Buka Telegram dan chat @SmokeSentryBot</li>
-          <li>Kirim perintah: /aktivasi [PRODUCT_ID]</li>
-          <li>Device akan muncul di dashboard ini</li>
+        <h3 className="font-bold text-lg mb-4">Cara Menghubungkan Device</h3>
+        <ol className="list-decimal list-inside space-y-3 text-text-muted">
+          <li className="pl-2">
+            Nyalakan ESP32 SmokeSentry
+            <p className="text-text-muted text-sm mt-1 ml-4">→ Tunggu buzzer bunyi 1x panjang, artinya ESP32 siap masuk mode setup</p>
+          </li>
+          <li className="pl-2">
+            Hubungkan HP/laptop ke WiFi hotspot bernama "SmokeSentry"
+            <p className="text-text-muted text-sm mt-1 ml-4">→ Tidak ada password, langsung connect</p>
+            <p className="text-text-muted text-sm mt-1 ml-4">→ Browser akan otomatis membuka halaman setup</p>
+            <p className="text-text-muted text-sm mt-1 ml-4">→ Jika tidak otomatis, buka manual: http://192.168.4.1</p>
+          </li>
+          <li className="pl-2">
+            Di halaman setup, klik "Configure WiFi"
+            <p className="text-text-muted text-sm mt-1 ml-4">→ Pilih nama WiFi rumah/kantor dari daftar yang muncul</p>
+            <p className="text-text-muted text-sm mt-1 ml-4">→ Masukkan password WiFi tersebut</p>
+          </li>
+          <li className="pl-2">
+            Isi Device Code dan API Key
+            <p className="text-text-muted text-sm mt-1 ml-4">→ Device Code & API Key bisa dilihat di halaman ini (tab Informasi Umum)</p>
+            <p className="text-text-muted text-sm mt-1 ml-4">→ Pastikan tidak ada spasi di awal/akhir</p>
+          </li>
+          <li className="pl-2">
+            Klik Save
+            <p className="text-text-muted text-sm mt-1 ml-4">→ Buzzer bunyi 3x pendek = berhasil terhubung ✅</p>
+            <p className="text-text-muted text-sm mt-1 ml-4">→ Device akan muncul Online di dashboard dalam beberapa detik</p>
+            <p className="text-text-muted text-sm mt-1 ml-4">→ Notifikasi Telegram pertama akan dikirim otomatis</p>
+          </li>
         </ol>
+        <div className="mt-4 p-4 rounded-lg" style={{ background: '#0a0a14', border: '1px solid #1e1e2e' }}>
+          <p className="font-bold text-sm mb-2" style={{ color: '#E8FF47' }}>CATATAN PENTING:</p>
+          <ul className="list-disc list-inside space-y-1 text-text-muted text-sm">
+            <li>Untuk ganti WiFi: tekan tombol BOOT di ESP32 saat menyala, lepas setelah buzzer bunyi → ulangi dari langkah 2</li>
+            <li>Jika device tidak muncul Online setelah 30 detik, cek kembali Device Code dan API Key yang dimasukkan</li>
+            <li>Device bisa diakses lokal via: http://smokesentry.local (hanya dari jaringan WiFi yang sama)</li>
+          </ul>
+        </div>
       </Card>
 
       {/* Add Device Modal */}
@@ -786,9 +815,27 @@ export default function DevicesPage() {
                     className="w-full px-4 py-2 bg-black border border-[#E8FF47] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E8FF47]"
                     placeholder="Contoh: 123456789"
                   />
-                  <p style={{ fontSize: '11px', color: '#444466', marginTop: '4px', marginBottom: '0' }}>
-                    Chat ID dari profil user (boleh diedit manual)
+                  <p style={{ fontSize: '11px', color: '#444466', marginTop: '4px', marginBottom: '8px' }}>
+                    Chat ID untuk kirim notifikasi Telegram ke device ini
                   </p>
+                  
+                  {/* ── Panduan Singkat Chat ID ── */}
+                  <div style={{
+                    background: '#0a0a14',
+                    border: '1px solid #1e1e2e',
+                    borderRadius: '0.5rem',
+                    padding: '0.75rem',
+                    marginBottom: '1rem'
+                  }}>
+                    <p style={{ fontSize: '11px', color: '#E8FF47', fontWeight: 600, marginBottom: '6px' }}>
+                      Cara dapat Chat ID kamu:
+                    </p>
+                    <ul style={{ paddingLeft: '1rem', color: '#888899', fontSize: '12px', lineHeight: 1.6, margin: 0 }}>
+                      <li>Buka Telegram → cari <a href="https://t.me/userinfobot" target="_blank" rel="noopener noreferrer" style={{ color: '#E8FF47', textDecoration: 'none', fontWeight: 600 }}>@userinfobot</a></li>
+                      <li>Kirim sembarang pesan (misalnya: hi)</li>
+                      <li>Bot akan balas dengan info akunmu, salin angka di baris Id:</li>
+                    </ul>
+                  </div>
 
                   {/* ── Panduan Chat ID ── */}
                   <div style={{
