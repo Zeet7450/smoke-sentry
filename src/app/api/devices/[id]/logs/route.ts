@@ -7,12 +7,14 @@ import { authOptions } from '@/lib/auth'
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions)
   if (!session || !session.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+
+  const { id } = await params
 
   // Ambil ?range=1h / 6h / 24h / 7d (default: 1h)
   const range  = req.nextUrl.searchParams.get('range') ?? '1h'
@@ -30,7 +32,7 @@ export async function GET(
   const device = await db.select().from(devices)
     .where(
       and(
-        eq(devices.id, params.id),
+        eq(devices.id, id),
         eq(devices.owner_id, session.user.id)
       )
     ).limit(1)
@@ -42,7 +44,7 @@ export async function GET(
   const logs = await db.select().from(sensorLogs)
     .where(
       and(
-        eq(sensorLogs.device_id, params.id),
+        eq(sensorLogs.device_id, id),
         gte(sensorLogs.created_at, since)
       )
     )
