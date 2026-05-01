@@ -6,6 +6,7 @@ import { eq, and } from 'drizzle-orm'
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
+    console.log('[INGEST] body received:', JSON.stringify(body))
 
     const {
       device_code,

@@ -64,8 +64,6 @@ export function SensorChart({ deviceId, initialData }: { deviceId: string; initi
 
   const chartHeight = typeof window !== 'undefined' && window.innerWidth < 768 ? 250 : 350
 
-  console.log('chartData:', chartData)
-
   if (loading && chartData.length === 0) {
     return (
       <div style={{ background: '#0f0f1a', borderRadius: '14px',
@@ -111,11 +109,30 @@ export function SensorChart({ deviceId, initialData }: { deviceId: string; initi
           <ResponsiveContainer width="100%" height={chartHeight}>
             <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#1a1a28" />
-              <XAxis dataKey="time" tick={{ fill: '#555577', fontSize: 11 }} />
-              <YAxis tick={{ fill: '#555577', fontSize: 11 }} />
+              <XAxis
+                dataKey="time"
+                tick={{ fill: '#888899', fontSize: 10 }}
+                interval={Math.floor(chartData.length / 8)}
+                angle={-30}
+                textAnchor="end"
+                height={45}
+              />
+              <YAxis
+                domain={[0, 'auto']}
+                tick={{ fill: '#888899', fontSize: 11 }}
+                width={45}
+              />
               <Tooltip
-                contentStyle={{ background: '#0f0f1a', border: '1px solid #1e1e2e',
-                                borderRadius: '8px', color: '#d0d0e0', fontSize: 12 }}
+                formatter={(value: any, name: any) => [
+                  `${value ?? 0} ppm`, name
+                ]}
+                contentStyle={{
+                  background: '#0f0f1a',
+                  border: '1px solid #1e1e2e',
+                  borderRadius: '8px',
+                  color: '#d0d0e0',
+                  fontSize: 12
+                }}
               />
               <Legend wrapperStyle={{ fontSize: 12, color: '#888899' }} />
               <Line type="monotone" dataKey="mq2" stroke="#C8E000"
