@@ -3,11 +3,12 @@ import { LineChart, Line, XAxis, YAxis, Tooltip,
          ResponsiveContainer, CartesianGrid, Legend } from 'recharts'
 import { useEffect, useState, useCallback } from 'react'
 
-export function SensorChart({ deviceId }: { deviceId: string }) {
-  const [chartData, setChartData] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+export function SensorChart({ deviceId, initialData }: { deviceId: string; initialData?: any[] }) {
+  const [chartData, setChartData] = useState<any[]>(initialData ?? [])
+  const [loading, setLoading] = useState(false)
 
   const fetchReadings = useCallback(async () => {
+    setLoading(true)
     try {
       const res = await fetch(`/api/devices/${deviceId}/readings`)
       if (!res.ok) throw new Error('Failed to fetch')
@@ -32,14 +33,17 @@ export function SensorChart({ deviceId }: { deviceId: string }) {
 
   useEffect(() => {
     if (!deviceId) return
+    if (initialData && initialData.length > 0) {
+      setChartData(initialData)
+    }
     fetchReadings()
     const interval = setInterval(fetchReadings, 5000)
     return () => clearInterval(interval)
-  }, [fetchReadings])
+  }, [deviceId, initialData, fetchReadings])
 
   const chartHeight = typeof window !== 'undefined' && window.innerWidth < 768 ? 250 : 350
 
-  if (loading) {
+  if (loading && chartData.length === 0) {
     return (
       <div style={{ background: '#0f0f1a', borderRadius: '14px',
                     border: '1px solid #1e1e2e', padding: '20px', height: chartHeight,

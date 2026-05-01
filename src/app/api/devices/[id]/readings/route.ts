@@ -11,6 +11,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params
+    
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
@@ -33,11 +34,11 @@ export async function GET(
       .where(eq(sensorLogs.device_id, id))
       .orderBy(desc(sensorLogs.created_at))
       .limit(100)
-
+    
     // Return in chronological order for chart
     return NextResponse.json(readings.reverse())
   } catch (error) {
-    console.error('Error fetching sensor readings:', error)
+    console.error('[readings] Error:', error)
     return NextResponse.json({ 
       success: false, 
       error: 'Failed to fetch readings' 
