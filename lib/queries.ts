@@ -38,7 +38,13 @@ export async function createDevice(data: {
   name: string
   location?: string
 }) {
-  const result = await db.insert(devices).values(data).returning()
+  const now = Date.now()
+  const result = await db.insert(devices).values({
+    id: crypto.randomUUID(),
+    ...data,
+    created_at: now,
+    updated_at: now,
+  }).returning()
   return result[0]
 }
 
@@ -53,16 +59,7 @@ export async function deleteDevice(deviceId: string) {
 
 // ─── DEVICE MEMBERS ─────────────────────────────
 export async function getDeviceMembers(deviceId: string) {
-  return db.select({
-    id: device_members.id,
-    role: device_members.role,
-    receive_notifications: device_members.receive_notifications,
-    invited_at: device_members.invited_at,
-    user_id: device_members.user_id,
-    user_name: users.name,
-    user_email: users.email,
-  }).from(device_members)
-    .innerJoin(users, eq(device_members.user_id, users.id))
+  return db.select().from(device_members)
     .where(eq(device_members.device_id, deviceId))
 }
 
@@ -72,13 +69,18 @@ export async function addDeviceMember(data: {
   role: string
   receive_notifications: boolean
 }) {
-  const result = await db.insert(device_members).values(data).returning()
+  const now = Date.now()
+  const result = await db.insert(device_members).values({
+    id: crypto.randomUUID(),
+    ...data,
+    invited_at: now,
+  }).returning()
   return result[0]
 }
 
 // ─── SENSOR READINGS ────────────────────────────
 export async function getSensorReadings(deviceId: string, hours: number = 24) {
-  const since = new Date(Date.now() - hours * 60 * 60 * 1000)
+  const since = Date.now() - hours * 60 * 60 * 1000
   return db.select().from(sensor_readings)
     .where(and(
       eq(sensor_readings.device_id, deviceId),
@@ -97,7 +99,12 @@ export async function createSensorReading(data: {
   flame_detected?: boolean
   is_alert?: boolean
 }) {
-  const result = await db.insert(sensor_readings).values(data).returning()
+  const now = Date.now()
+  const result = await db.insert(sensor_readings).values({
+    id: crypto.randomUUID(),
+    ...data,
+    recorded_at: now,
+  }).returning()
   return result[0]
 }
 
@@ -120,15 +127,21 @@ export async function createAlert(data: {
   message?: string
   telegram_sent?: boolean
 }) {
-  const result = await db.insert(alerts).values(data).returning()
+  const now = Date.now()
+  const result = await db.insert(alerts).values({
+    id: crypto.randomUUID(),
+    ...data,
+    triggered_at: now,
+  }).returning()
   return result[0]
 }
 
 export async function resolveAlert(alertId: string, resolvedBy: string) {
+  const now = Date.now()
   const result = await db.update(alerts)
     .set({ 
       is_resolved: true, 
-      resolved_at: new Date(), 
+      resolved_at: now, 
       resolved_by: resolvedBy 
     })
     .where(eq(alerts.id, alertId))
@@ -152,16 +165,19 @@ export async function getDashboardStats(userId: string) {
   
   const today = new Date()
   today.setHours(0, 0, 0, 0)
+  const todayTimestamp = today.getTime()
+  
+  const fiveMinutesAgo = Date.now() - 5 * 60 * 1000
   
   const [alertsResult, readingsResult] = await Promise.all([
     db.select().from(alerts)
       .where(and(
-        gte(alerts.triggered_at, today),
+        gte(alerts.triggered_at, todayTimestamp),
         eq(alerts.is_resolved, false)
       )),
     db.select().from(sensor_readings)
       .where(and(
-        gte(sensor_readings.recorded_at, new Date(Date.now() - 5 * 60 * 1000)),
+        gte(sensor_readings.recorded_at, fiveMinutesAgo),
         eq(sensor_readings.is_alert, false)
       ))
   ])
