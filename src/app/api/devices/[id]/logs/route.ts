@@ -48,7 +48,7 @@ export async function GET(
         gte(sensorLogs.created_at, since)
       )
     )
-    .orderBy(desc(sensorLogs.created_at))
+    .orderBy(sensorLogs.created_at)
     .limit(limit)
 
   return NextResponse.json({
@@ -59,6 +59,6 @@ export async function GET(
     },
     range,
     count: logs.length,
-    logs:  logs.reverse(), // chronological order untuk chart
+    logs:  logs, // chronological order for chart
   })
 }

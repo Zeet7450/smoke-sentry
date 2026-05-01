@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/SmokeToast';
 import { ConfirmDeleteModal } from '@/components/ui/ConfirmDeleteModal';
+import { SensorChart } from '@/components/SensorChart';
 
 export default function DevicesPage() {
   const [devices, setDevices] = useState<any[]>([]);
@@ -21,7 +22,8 @@ export default function DevicesPage() {
     location: '', 
     mq2_threshold: 400, 
     mq135_threshold: 300, 
-    flame_threshold: 500
+    flame_threshold: 500,
+    telegramchatid: ''
   });
   const [settingsTab, setSettingsTab] = useState('info');
   const [loading, setLoading] = useState(false);
@@ -260,6 +262,7 @@ export default function DevicesPage() {
       mq2_threshold: device.mq2_threshold || 400,
       mq135_threshold: device.mq135_threshold || 300,
       flame_threshold: device.flame_threshold || 500,
+      telegramchatid: device.telegramchatid || '',
     });
     setSettingsTab('info');
     setIsSettingsModalOpen(true);
@@ -554,6 +557,16 @@ export default function DevicesPage() {
               >
                 Notifikasi
               </button>
+              <button
+                onClick={() => setSettingsTab('chart')}
+                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                  settingsTab === 'chart' 
+                    ? 'border-[#E8FF47] text-[#E8FF47]' 
+                    : 'border-transparent text-text-muted hover:text-white'
+                }`}
+              >
+                Grafik Sensor
+              </button>
             </div>
 
             <form onSubmit={handleSettingsSubmit} className="space-y-6">
@@ -767,12 +780,14 @@ export default function DevicesPage() {
                   </label>
                   <input
                     type="text"
-                    value={selectedDevice.telegramchatid || ''}
-                    disabled
-                    className="w-full px-4 py-2 bg-black border border-[#1E1E2E] rounded-lg text-text-muted"
+                    value={settingsFormData.telegramchatid}
+                    onChange={(e) => setSettingsFormData({ ...settingsFormData, telegramchatid: e.target.value })}
+                    autoComplete="off"
+                    className="w-full px-4 py-2 bg-black border border-[#E8FF47] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E8FF47]"
+                    placeholder="Contoh: 123456789"
                   />
                   <p style={{ fontSize: '11px', color: '#444466', marginTop: '4px', marginBottom: '0' }}>
-                    Diatur dari profil user
+                    Chat ID dari profil user (boleh diedit manual)
                   </p>
 
                   {/* ── Panduan Chat ID ── */}
@@ -856,6 +871,13 @@ export default function DevicesPage() {
                   >
                     Test Kirim Notifikasi
                   </Button>
+                </div>
+              )}
+
+              {/* Tab 4: Grafik Sensor */}
+              {settingsTab === 'chart' && (
+                <div className="space-y-4">
+                  <SensorChart deviceId={selectedDevice.id} />
                 </div>
               )}
 
