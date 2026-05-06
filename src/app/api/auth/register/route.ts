@@ -1,4 +1,9 @@
 import { NextResponse } from 'next/server';
+import bcrypt from 'bcryptjs';
+import { db } from '@/lib/db';
+import { users } from '@/lib/schema';
+import { eq } from 'drizzle-orm';
+import { nanoid } from 'nanoid';
 
 export async function POST(request: Request) {
   try {
@@ -27,29 +32,51 @@ export async function POST(request: Request) {
       );
     }
 
-    const { neon } = await import('@neondatabase/serverless');
-    const sql = neon(process.env.DATABASE_URL);
+    const emailLower = email.toLowerCase().trim();
 
     // Check if user already exists
-    const existingUser = await sql`
-      SELECT id FROM users WHERE email = ${email}
-    `;
+    const existingUsers = await db.select()
+      .from(users)
+      .where(eq(users.email, emailLower))
+      .limit(1);
 
-    if (existingUser.length > 0) {
+    if (existingUsers.length > 0) {
+      const existingUser = existingUsers[0];
+
+      // If user exists but has no password (Google account), add password (account linking)
+      if (!existingUser.password) {
+        const hashed = await bcrypt.hash(password, 12);
+        await db.update(users)
+          .set({ 
+            password: hashed, 
+            name: name || existingUser.name 
+          })
+          .where(eq(users.email, emailLower));
+
+        return NextResponse.json(
+          { success: true, linked: true, message: 'Password ditambahkan ke akun Google yang sudah ada' },
+          { status: 200 }
+        );
+      }
+
+      // User already has password (form account)
       return NextResponse.json(
         { error: 'Email sudah terdaftar' },
-        { status: 400 }
+        { status: 409 }
       );
     }
 
-    // Create user (in production, hash the password with bcrypt)
-    await sql`
-      INSERT INTO users (name, email, password)
-      VALUES (${name}, ${email}, ${password})
-    `;
+    // Create new user with hashed password
+    const hashed = await bcrypt.hash(password, 12);
+    await db.insert(users).values({
+      id: nanoid(),
+      name: name || emailLower.split('@')[0],
+      email: emailLower,
+      password: hashed,
+    });
 
     return NextResponse.json(
-      { message: 'Registrasi berhasil' },
+      { success: true, message: 'Registrasi berhasil' },
       { status: 201 }
     );
   } catch (error) {

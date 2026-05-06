@@ -27,21 +27,24 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null
-        
+
+        const email = String(credentials.email).toLowerCase().trim()
+        const password = String(credentials.password)
+
         try {
           const user = await db.select().from(users)
-            .where(eq(users.email, credentials.email as string))
+            .where(eq(users.email, email))
             .limit(1)
-          
+
           if (!user[0]) return null
           if (!user[0].password) return null  // Google user, no password
-          
-          const isValid = await bcrypt.compare(credentials.password as string, user[0].password)
+
+          const isValid = await bcrypt.compare(password, user[0].password)
           if (!isValid) return null
-          
-          return { 
-            id: user[0].id, 
-            name: user[0].name, 
+
+          return {
+            id: user[0].id,
+            name: user[0].name,
             email: user[0].email,
             image: user[0].image
           }
@@ -55,23 +58,36 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async signIn({ user, account, profile }) {
       if (account?.provider === 'google' && user.email) {
+        const email = user.email.toLowerCase().trim()
+
         try {
           const existingUser = await db.select()
             .from(users)
-            .where(eq(users.email, user.email))
+            .where(eq(users.email, email))
             .limit(1)
 
-          if (!existingUser[0]) {
+          if (existingUser[0]) {
+            // Update existing user with Google data (account linking)
+            await db.update(users)
+              .set({
+                name: user.name ?? existingUser[0].name,
+                image: user.image ?? existingUser[0].image,
+                emailVerified: existingUser[0].emailVerified ?? Date.now(),
+              })
+              .where(eq(users.email, email))
+          } else {
+            // Create new user from Google
             await db.insert(users).values({
               id: user.id,
               name: user.name,
-              email: user.email,
+              email: email,
               image: user.image,
+              emailVerified: Date.now(),
             })
           }
           return true
         } catch (error) {
-          console.error('[Auth] Error creating user:', error)
+          console.error('[Auth] Error with Google sign in:', error)
           return false
         }
       }
