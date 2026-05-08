@@ -50,6 +50,7 @@ export function SmokeSentryModel() {
       onPointerOver={() => setHovered(true)}
       onPointerOut={() => setHovered(false)}
       onPointerMove={handlePointerMove}
+      scale={2}
     >
       <primitive object={scene} />
     </group>
