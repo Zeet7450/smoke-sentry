@@ -88,7 +88,8 @@ export const authOptions: NextAuthOptions = {
           return true
         } catch (error) {
           console.error('[Auth] Error with Google sign in:', error)
-          return false
+          // Don't block login even if database operations fail
+          return true
         }
       }
       return true

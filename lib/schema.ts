@@ -170,3 +170,10 @@ export const sensorLogs = pgTable('sensor_logs', {
   created_at:     timestamp('created_at').notNull().defaultNow(),
 })
 
+// ─── TABLE: waitlist ───────────────────────────────────────────────
+export const waitlist = pgTable('waitlist', {
+  id:         uuid('id').primaryKey().defaultRandom(),
+  email:      text('email').notNull().unique(),
+  created_at: timestamp('created_at').notNull().defaultNow(),
+})
+

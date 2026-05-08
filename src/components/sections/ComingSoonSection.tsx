@@ -34,6 +34,36 @@ function useCountdown(target: Date) {
 
 export default function ComingSoonSection() {
   const { days, hours, minutes, seconds } = useCountdown(LAUNCH_DATE);
+  const [email, setEmail] = useState('');
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const res = await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || 'Terjadi kesalahan');
+      } else {
+        setIsSuccess(true);
+      }
+    } catch (err) {
+      setError('Terjadi kesalahan koneksi');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const units = [
     { label: 'Hari', value: days },
@@ -133,14 +163,33 @@ export default function ComingSoonSection() {
 
         {/* CTA */}
         <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
-          <input
-            type="email"
-            placeholder="Masukkan email kamu..."
-            className="w-full sm:w-80 px-4 py-3 rounded-xl bg-[#0F0F17] border border-[#1E1E2E] text-white text-sm placeholder:text-[#3A3A4A] focus:outline-none focus:border-[#E8FF47]/50 transition-colors"
-          />
-          <button className="w-full sm:w-auto px-6 py-3 bg-[#E8FF47] text-black font-bold text-sm rounded-xl hover:bg-[#D4EB3A] transition-colors whitespace-nowrap">
-            Beritahu Saya
-          </button>
+          {isSuccess ? (
+            <div className="text-[#E8FF47] text-sm font-medium text-center">
+              ✅ Berhasil! Kami akan menghubungi kamu saat SmokeSentry tersedia.
+            </div>
+          ) : (
+            <>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Masukkan email kamu..."
+                className="w-full sm:w-80 px-4 py-3 rounded-xl bg-[#0F0F17] border border-[#1E1E2E] text-white text-sm placeholder:text-[#3A3A4A] focus:outline-none focus:border-[#E8FF47]/50 transition-colors"
+              />
+              <button
+                onClick={handleSubmit}
+                disabled={isLoading}
+                className="w-full sm:w-auto px-6 py-3 bg-[#E8FF47] text-black font-bold text-sm rounded-xl hover:bg-[#D4EB3A] transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading ? 'Memproses...' : 'Beritahu Saya'}
+              </button>
+            </>
+          )}
+          {error && !isSuccess && (
+            <div className="text-red-400 text-sm text-center w-full sm:w-80">
+              {error}
+            </div>
+          )}
         </div>
       </div>
     </section>

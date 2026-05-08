@@ -1,21 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { signIn } from 'next-auth/react';
+import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import Link from 'next/link';
 
-export default function LoginPage() {
+function LoginForm() {
+  const searchParams = useSearchParams();
+  const error = searchParams.get('error');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [formError, setFormError] = useState('');
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError('');
+    setFormError('');
     try {
       const result = await signIn('credentials', {
         email,
@@ -23,12 +26,12 @@ export default function LoginPage() {
         redirect: false,
       });
       if (result?.error) {
-        setError('Email atau password salah');
+        setFormError('Email atau password salah');
       } else {
         window.location.href = '/dashboard';
       }
     } catch (error) {
-      setError('Terjadi kesalahan. Silakan coba lagi.');
+      setFormError('Terjadi kesalahan. Silakan coba lagi.');
     } finally {
       setIsLoading(false);
     }
@@ -67,7 +70,12 @@ export default function LoginPage() {
               required
             />
           </div>
-          {error && <p className="text-danger text-sm">{error}</p>}
+          {formError && <p className="text-danger text-sm">{formError}</p>}
+          {error === 'AccessDenied' && (
+            <p className="text-danger text-sm">
+              Login gagal. Coba gunakan akun Google yang berbeda atau hubungi support.
+            </p>
+          )}
           <Button type="submit" variant="primary" size="md" className="w-full" disabled={isLoading}>
             {isLoading ? 'Memuat...' : 'Masuk'}
           </Button>
@@ -102,5 +110,13 @@ export default function LoginPage() {
         </p>
       </Card>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-background p-4">Loading...</div>}>
+      <LoginForm />
+    </Suspense>
   );
 }
